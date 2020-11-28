@@ -149,7 +149,7 @@ minetest.register_on_joinplayer(function(player)
 	end
 	if player:get_attribute("blind") == "true" then
 		blind(name,name)
-	end	
+	end
 	-- set sneak mode if unassigned
 	if player:get_attribute("sneak_mode") == nil then
 		player:set_attribute("sneak_mode", default_sneak_mode)
@@ -171,7 +171,7 @@ minetest.register_chatcommand("setfree",{
 	description = "Reset player movement.",
 	func = function(name, target)
 		local player = minetest.get_player_by_name(target)
-		if player == nil then 
+		if player == nil then
 			return false, "Player does not exist."
 		end
 		player:set_attribute("hobbled", "")
@@ -209,7 +209,7 @@ minetest.register_chatcommand("set_sneak",{
 			return false, "Must include player name and sneak mode."
 		end
 		local player = minetest.get_player_by_name(target)
-		if not player then 
+		if not player then
 			return false, "Player does not exist."
 		end
 		if not mode or (mode ~= "old" and mode ~= "new" and mode ~= "none") then
@@ -227,7 +227,7 @@ minetest.register_chatcommand("curses",{
 	description = "Check player status.",
 	func = function(user_name, target_name)
 		local player = minetest.get_player_by_name(target_name)
-		if player == nil then 
+		if player == nil then
 			return false, "Player does not exist or is not logged in."
 		end
 		local result = "Status for player "..target_name..": "
@@ -325,20 +325,47 @@ minetest.register_chatcommand("vanish", {
 	description = "Make user invisible",
 	privs = {hidden_one = true},
 	func = function(user)
-		local prop
 		local player = minetest.get_player_by_name(user)
-		vanished_players[user] = not vanished_players[user]
+
 		if vanished_players[user] then
-			prop = {visual_size = {x = 0, y = 0},
-			collisionbox = {0,0,0,0,0,0}}
-			player:set_nametag_attributes({color = {a = 0, r = 255, g = 255, b = 255}})
+			-- player is vanished, unvanish
+
+			-- use defaults if for some reason data is not there
+			local props = vanished_players[user][1] or {
+				visual_size  = { x = 1, y = 1 },
+				collisionbox = { -0.35, 0.00, -0.35, 0.35, 1.00, 0.35 }
+			}
+
+			local ntatts = vanished_players[user][2] or {
+				text  = user,
+				color = { r = 255, g = 255, b = 255, a = 255 }
+			}
+
+			vanished_players[user] = nil
+
+			player:set_properties(props)
+			player:set_nametag_attributes(ntatts)
+
 		else
-			-- default player size.
-			prop = {visual_size = {x = 1, y = 1},
-			collisionbox = {-0.35, -1, -0.35, 0.35, 1, 0.35}}
-			player:set_nametag_attributes({color = {a = 255, r = 255, g = 255, b = 255}})
+			-- player is unvanished, vanish
+
+			-- preserve properties
+			vanished_players[user] = {
+				player:get_properties(),
+				player:get_nametag_attributes()
+			}
+
+			-- vanish
+			player:set_properties({
+				visual_size  = { x = 0, y = 0, z = 0 },
+				collisionbox = { 0, 0, 0, 0, 0, 0 }
+			})
+
+			player:set_nametag_attributes({
+				text = " ",
+				color = 0
+			})
 		end
-		player:set_properties(prop)
 	end
 })
 
@@ -353,7 +380,7 @@ minetest.register_chatcommand("proclaim", {
 			return
 		end
 		minetest.chat_send_all(text)
-		if minetest.get_modpath("irc") then 
+		if minetest.get_modpath("irc") then
 			if irc.connected and irc.config.send_join_part then
 				irc:say(text)
 			end
