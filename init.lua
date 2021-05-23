@@ -320,6 +320,12 @@ minetest.register_chatcommand("uncage", {
 -- hide player model and nametag (only works in 0.4.14 and above)
 vanished_players = {}
 
+-- 5.x update: backwards compat with 0.4.x
+local selectionbox = 'selectionbox'
+if not minetest.features.object_independent_selectionbox then
+    selectionbox = 'collisionbox'
+end
+
 minetest.register_chatcommand("vanish", {
 	params = "",
 	description = "Make user invisible",
@@ -332,8 +338,8 @@ minetest.register_chatcommand("vanish", {
 
 			-- use defaults if for some reason data is not there
 			local props = vanished_players[user][1] or {
-				visual_size  = { x = 1, y = 1 },
-				collisionbox = { -0.35, 0.00, -0.35, 0.35, 1.00, 0.35 }
+				visual_size    = { x = 1, y = 1 },
+				[selectionbox] = { -0.35, 0.00, -0.35, 0.35, 1.00, 0.35 }
 			}
 
 			local ntatts = vanished_players[user][2] or {
@@ -357,8 +363,8 @@ minetest.register_chatcommand("vanish", {
 
 			-- vanish
 			player:set_properties({
-				visual_size  = { x = 0, y = 0, z = 0 },
-				collisionbox = { 0, 0, 0, 0, 0, 0 }
+				visual_size    = { x = 0, y = 0, z = 0 },
+				[selectionbox] = { 0, 0, 0, 0, 0, 0 }
 			})
 
 			player:set_nametag_attributes({
